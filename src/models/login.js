@@ -1,9 +1,9 @@
 import { routerRedux } from 'dva/router';
 import { stringify } from 'qs';
-import { fakeAccountLogin } from '../services/api';
-import { setAuthority } from '../utils/authority';
-import { reloadAuthorized } from '../utils/Authorized';
-import { getPageQuery } from '../utils/utils';
+import { fakeAccountLogin, getFakeCaptcha } from '@/services/api';
+import { setAuthority } from '@/utils/authority';
+import { getPageQuery } from '@/utils/utils';
+import { reloadAuthorized } from '@/utils/Authorized';
 
 export default {
   namespace: 'login',
@@ -29,17 +29,21 @@ export default {
           const redirectUrlParams = new URL(redirect);
           if (redirectUrlParams.origin === urlParams.origin) {
             redirect = redirect.substr(urlParams.origin.length);
-            if (redirect.startsWith('/#')) {
-              redirect = redirect.substr(2);
+            if (redirect.match(/^\/.*#/)) {
+              redirect = redirect.substr(redirect.indexOf('#') + 1);
             }
           } else {
-            window.location.href = redirect;
-            return;
+            redirect = null;
           }
         }
         yield put(routerRedux.replace(redirect || '/'));
       }
     },
+
+    *getCaptcha({ payload }, { call }) {
+      yield call(getFakeCaptcha, payload);
+    },
+
     *logout(_, { put }) {
       yield put({
         type: 'changeLoginStatus',
@@ -49,14 +53,17 @@ export default {
         },
       });
       reloadAuthorized();
-      yield put(
-        routerRedux.push({
-          pathname: '/user/login',
-          search: stringify({
-            redirect: window.location.href,
-          }),
-        })
-      );
+      // redirect
+      if (window.location.pathname !== '/user/login') {
+        yield put(
+          routerRedux.replace({
+            pathname: '/user/login',
+            search: stringify({
+              redirect: window.location.href,
+            }),
+          })
+        );
+      }
     },
   },
 

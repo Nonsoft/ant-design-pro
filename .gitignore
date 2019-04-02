@@ -20,14 +20,13 @@ yarn-error.log
 yarn.lock
 package-lock.json
 *bak
-jsconfig.json
 .vscode
 
 # visual studio code
 .history
 *.log
-
-functions/mock
+functions/*
+lambda/mock/index.js
 .temp/**
 
 # umi
@@ -36,3 +35,4 @@ functions/mock
 
 # screenshot
 screenshot
+.firebase
